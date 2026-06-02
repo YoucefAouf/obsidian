@@ -14,7 +14,7 @@ where:
 - $\omega_b \in \mathbb{R}^3$ : base angular velocity.
 - $\dot q_j \in \mathbb{R}^{n}$ : joint velocities.
 #### Optimization variables:
-$$ x = \begin{bmatrix} \ddot q \\ f_c \end{bmatrix} \in \mathbb{R}^{d} $$
+$$ z = \begin{bmatrix} \ddot q \\ f_c \end{bmatrix} \in \mathbb{R}^{d} $$
 where:
 - $\ddot q \in \mathbb{R}^{6+n}$ : generalized acceleration.
 - $f_c \in \mathbb{R}^{n_{st}}$ : contact forces.
@@ -25,20 +25,28 @@ where:
 ## Base pose task
 #### Task space variable:
 Base pose:
-$$x_{b} = \begin{bmatrix} p_{b} \\ \Theta_{b} \end{bmatrix} \in \mathbb{R}^{6} $$
+$$x_{b} = \begin{bmatrix} p_{b} \\ q_{b} \end{bmatrix} \in \mathbb{R}^{3}\times \mathbb{S}^3  $$
 Velocity:
 $$ \dot{x}_{b} = J_{b} \dot{q} $$
 Acceleration:
 $$ \ddot{x}_{b} = J_{b} \ddot{q} + \dot{J}_{b} \dot{q}$$
 where:
 - $p_{b} \in \mathbb{R}^{3}$ : base position.
-- $\Theta_{b} \in \mathbb{R}^{3}$ : Euler angle representation of the base orientation.
+- $q_{b} \in \mathbb{S}^3$ : base orientation.
 - $J_{b} \in \mathbb{R}^{6\times(6+n)}$ : base Jacobian.
 #### Desired acceleration:
-$$ \ddot x^{des}_{b} = \ddot x^{ref}_{b} + K_p (x^{ref}_{b} - x_{b}) + K_d (\dot x^{ref}_{b} - \dot x_{b}) $$
+$$ \ddot x^{des}_{b} = \ddot x^{ref}_{b} + K_p e_{b} + K_d \dot e_{b} $$
+with:
+$$ e_{b} 
+= \begin{bmatrix} p^{ref}_{b} - p_{b} \\ \text{Log}(R^{ref} R^\top)^\vee \end{bmatrix} $$
+$$ \dot e_{b} 
+= \begin{bmatrix} v^{ref}_{b} - v_{b} \\ \omega^{ref}_{b} - \omega_{b} \end{bmatrix} $$
 where:
-- $\ddot x^{des}_{b} \in \mathbb{R}^{6}$ : desired base acceleration.
-- $x^{ref}_{b}, \dot x^{ref}_{b}, \ddot x^{ref}_{b} \in \mathbb{R}^{6}$ : reference base position/velocity/acceleration.
+- $\ddot x^{des}_{b}, \ddot x^{ref}_{b} \in \mathbb{R}^{6}$ : desired/reference base acceleration.
+- $e_{b}, \dot e_{b}\in \mathbb{R}^{3}$ : base position/velocity error.
+- $p^{ref}_{b}\in \mathbb{R}^{3}$ : reference base position.
+- $v^{ref}_{b}, \omega^{ref}_{b}\in \mathbb{R}^{3}$ : reference base linear/angular velocity.
+- $R, R^{ref}\in SO3$ : current/reference base orientation as rotation matrix.
 - $K_p \in \mathbb{R}^{6\times6}$ : Proportional gains matrix.
 - $K_d \in \mathbb{R}^{6\times6}$ : Derivative gains matrix.
 #### Least squares objective:
@@ -46,7 +54,7 @@ $$ \frac{1}{2} {|| J_{b} \ddot{q} + \dot{J}_{b} \dot{q} - \ddot x^{des}_{b} ||}^
 where:
 - $W_{b} \in \mathbb{R}^{6\times6}$ : Positive semidefinite weight matrix
 #### Expanded QP form:
-$$\boxed{ \frac{1}{2} x^\top \begin{bmatrix} H_{b} & 0 \\ 0 & 0 \end{bmatrix} x + \begin{bmatrix} g^\top_{b} & 0 \end{bmatrix} x }$$
+$$\boxed{ \frac{1}{2} z^\top \begin{bmatrix} H_{b} & 0 \\ 0 & 0 \end{bmatrix} z + \begin{bmatrix} g^\top_{b} & 0 \end{bmatrix} z }$$
 with:
 $$ H_{b} = J^\top_{b} W_{b} J_{b}$$
 $$ g_{b} = J^\top_{b} W_{b} (\dot{J}_{b} \dot{q} - \ddot{x}^{des}_{b})$$
@@ -76,7 +84,7 @@ $$ \frac{1}{2} {|| J_{sw} \ddot{q} + \dot{J}_{sw} \dot{q} - \ddot x^{des}_{sw} |
 where:
 - $W_{sw} \in \mathbb{R}^{3\times3}$ : Positive semidefinite weight matrix.
 #### Expanded QP form:
-$$\boxed{ \frac{1}{2} x^\top \begin{bmatrix} H_{sw} & 0 \\ 0 & 0 \end{bmatrix} x + \begin{bmatrix} g^\top_{sw} & 0 \end{bmatrix} x }$$
+$$\boxed{ \frac{1}{2} z^\top \begin{bmatrix} H_{sw} & 0 \\ 0 & 0 \end{bmatrix} z + \begin{bmatrix} g^\top_{sw} & 0 \end{bmatrix} z }$$
 with:
 $$ H_{sw} = J^\top_{sw} W_{sw} J_{sw}$$
 $$ g_{sw} = J^\top_{sw} W_{sw} (\dot{J}_{sw} \dot{q} - \ddot{x}^{des}_{sw})$$
@@ -89,7 +97,7 @@ $$ \frac{1}{2} {|| f_{c} ||}^2_{W_{f}} $$
 where:
 - $W_{f} \in \mathbb{R}^{n_{st}\times n_{st}}$ : Weight matrix for the force regularization task.
 #### Expanded QP form:
-$$\boxed{ \frac{1}{2} x^\top \begin{bmatrix} 0 & 0 \\ 0 & H_{f} \end{bmatrix} x + \begin{bmatrix} 0 & g^\top_{f} \end{bmatrix} x }$$
+$$\boxed{ \frac{1}{2} z^\top \begin{bmatrix} 0 & 0 \\ 0 & H_{f} \end{bmatrix} z + \begin{bmatrix} 0 & g^\top_{f} \end{bmatrix} z }$$
 with:
 $$ H_{f} = W_{f} $$
 $$ g_{f} = 0_{n_{st}\times 1} $$
@@ -103,7 +111,7 @@ The core of full WBC, [[Floating base dynamics#Unactuated dynamics]] represent t
 $$M_{b}(q) \ddot{q} + h_{b}(q,\dot{q})= J_{c,b}^\top f_{c} $$
 $$ M_{b}(q) \ddot{q} - J_{c,b}^\top f_{c} = -h_{b}(q,\dot{q}) $$
 **QP equality form:**
-$$\boxed{ A_{fb} x = b_{fb} }$$
+$$\boxed{ A_{fb} z = b_{fb} }$$
 with:
 $$ A_{fb} = \begin{bmatrix} M_b \ , \ -J_{c,b}^\top \end{bmatrix}$$
 $$ b_{fb} = -h_{b}$$
@@ -119,7 +127,7 @@ Rearrange terms:
 $$J_{st} \ddot{q} = - \dot{J}_{st} \dot{q}$$
 Could also be a soft constraint: ${|| J_{st} \ddot{q} + \dot{J}_{st} \dot{q} ||}^2_{W_{st}}$ , for mud or whenever contacts aren't fixed
 **QP equality form:**
-$$\boxed{ A_{st} x = b_{st} }$$
+$$\boxed{ A_{st} z = b_{st} }$$
 with:
 $$ A_{st} = \begin{bmatrix} J_{st} & 0_{n_{st}\times n_{st}} \end{bmatrix}$$
 $$ b_{st} = - \dot{J}_{st} \dot{q}$$
@@ -138,7 +146,7 @@ $${\dot q_{j,max}^* = \min \left[ \dot q_{j,max}, \frac{q_{j,max} - q_j(k)}{\Del
 Similarly for $\dot q_j(k+1)$, we can obtain the joint acceleration limits:
 $$ \ddot q_{j,min} = \frac{\dot q_{j,min}^* - \dot q_j(k)}{\Delta t} \le \ddot q_j \le \frac{\dot q_{j,max}^* - \dot q_j(k)}{\Delta t} = \ddot q_{j,max}$$
 **QP inequality form:**
-$$\boxed{ l_{j} \le C_j {x} \le u_{j} }$$
+$$\boxed{ l_{j} \le C_j {z} \le u_{j} }$$
 with:
 $$ C_{j} = \begin{bmatrix} 0_{n\times 6} & I_{n\times n} & 0_{n\times n_{st}} \end{bmatrix}$$
 $$ l_{j} = \ddot q_{j,min}$$
@@ -152,7 +160,7 @@ where:
 ---
 # Full optimization problem (QP form)
 Finally we have:
-$$\tag{QP} \begin{aligned} \min_{x} & \quad \frac{1}{2}x^{T}Hx+g^{T}x \\ \text{s.t.}&\left\{ \begin{array}{ll} Ax = b, \\ l \leq Cx \leq u.\\ \end{array} \right. \end{aligned} $$
+$$\tag{QP} \begin{aligned} \min_{z} & \quad \frac{1}{2}z^{T}Hz+g^{T}z \\ \text{s.t.}&\left\{ \begin{array}{ll} Az = b, \\ l \leq Cz \leq u.\\ \end{array} \right. \end{aligned} $$
 with:
 $$
 \begin{aligned}
@@ -204,7 +212,7 @@ where:
 Acceleration-level WBC solves for the desired generalized accelerations and contact forces:
 
 $$
-x^* =
+z^* =
 \begin{bmatrix}
 \ddot q^* \\
 f_c^*

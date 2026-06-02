@@ -1,0 +1,12 @@
+{
+	"nodes":[
+		{"id":"236cef4fff5cc32c","x":-140,"y":80,"width":250,"height":60,"color":"6","type":"text","text":"[[C- Full WBC]]"},
+		{"id":"d0e28aaa7e792ee4","x":-100,"y":-40,"width":250,"height":60,"color":"1","type":"text","text":"[[B- Acceleration WBC]]"},
+		{"id":"d273c644e0e2f88a","x":-520,"y":-310,"width":250,"height":60,"type":"text","text":"Robot state $s$"},
+		{"id":"de4d540502b54366","x":110,"y":-500,"width":250,"height":60,"color":"3","type":"text","text":"[[Low-level control]]"},
+		{"id":"308e563c48c21d57","x":-320,"y":-500,"width":250,"height":60,"color":"3","type":"text","text":"[[A- Velocity WBC]]"}
+	],
+	"edges":[
+		{"id":"c7f071f1ae898db4","fromNode":"308e563c48c21d57","fromSide":"right","toNode":"de4d540502b54366","toSide":"left","color":"3","label":"\\dot q\nsdfa"}
+	]
+}

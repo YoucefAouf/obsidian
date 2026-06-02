@@ -14,7 +14,7 @@ where:
 - $\omega_b \in \mathbb{R}^3$ : base angular velocity.
 - $\dot q_j \in \mathbb{R}^{n}$ : joint velocities.
 #### Optimization variables:
-$$ x =  \dot q  \in \mathbb{R}^{d} $$
+$$ z =  \dot q  \in \mathbb{R}^{d} $$
 where:
 - $\dot q \in \mathbb{R}^{d}$ : generalized velocity.
 - $d = 6 + n$: dimension of the optimization variables.
@@ -23,26 +23,31 @@ where:
 ## Base pose task
 #### Task space variable:
 Base pose:
-$$x_{b} = \begin{bmatrix} p_{b} \\ \Theta_{b} \end{bmatrix} \in \mathbb{R}^{6} $$
+$$x_{b} = \begin{bmatrix} p_{b} \\ q_{b} \end{bmatrix} \in \mathbb{R}^{3}\times \mathbb{S}^3  $$
 Velocity:
 $$ \dot{x}_{b} = J_{b} \dot{q} $$
 where:
-- $p_b \in \mathbb{R}^3$ : base position
-- $\Theta_b \in \mathbb{R}^3$ : Euler angle representation of the base orientation
+- $p_b \in \mathbb{R}^3$ : base position.
+- $q_{b} \in \mathbb{S}^3$ : base orientation.
 - $J_{b} \in \mathbb{R}^{6\times(6+n)}$ : base Jacobian.
 - 
 #### Desired velocity:
-$$ \dot x^{des}_{b} = \dot x^{ref}_{b} + K_p (x^{ref}_{b} - x_{b}) $$
+$$ \dot x^{des}_{b} = \dot x^{ref}_{b} + K_p e_b $$
+with:
+$$ e_{b} 
+= \begin{bmatrix} p^{ref}_{b} - p_{b} \\ \text{Log}(R^{ref} R^\top)^\vee \end{bmatrix} $$
 where:
-- $\dot x^{des}_{b} \in \mathbb{R}^{6}$ : desired base velocity.
-- $x^{ref}_{b}, \dot x^{ref}_{b} \in \mathbb{R}^{6}$ : reference base position/velocity.
+- $\dot x^{des}_{b}, \dot x^{ref}_{b} \in \mathbb{R}^{6}$ : desired/reference base velocity.
+- $e_{b}\in \mathbb{R}^{3}$ : base pose error.
+- $p^{ref}_{b}\in \mathbb{R}^{3}$ : reference base position.
+- $R, R^{ref}\in SO3$ : current/reference base orientation as rotation matrix.
 - $K_p \in \mathbb{R}^{6\times6}$ : Proportional gains matrix.
 #### Least squares objective:
 $$ \frac{1}{2} {|| J_b \dot q - \dot x^{des}_b ||}^2_{W_{b}} $$
 where:
 - $W_{b} \in \mathbb{R}^{6\times6}$ : Weight matrix for the base tracking task
 #### Expanded QP form:
-$$\boxed{ \frac{1}{2} x^\top  H_{b} x + g^\top_{b} x }$$
+$$\boxed{ \frac{1}{2} z^\top  H_{b} z + g^\top_{b} z }$$
 with:
 $$ H_{b} = J^\top_{b} W_{b} J_{b}$$
 $$ g_{b} = - J^\top_{b} W_{b} {\dot{x}^{des}_{b}}^\top$$
@@ -69,7 +74,7 @@ $$ \frac{1}{2} {|| J_{sw} \dot q - \dot x^{des}_{sw} ||}^2_{W_{sw}} $$
 where:
 - $W_{sw} \in \mathbb{R}^{3\times3}$ : Weight matrix for the swing foot tracking task
 #### Expanded QP form:
-$$\boxed{ \frac{1}{2} x^\top  H_{sw} x + g^\top_{sw} x }$$
+$$\boxed{ \frac{1}{2} z^\top  H_{sw} z + g^\top_{sw} z }$$
 with:
 $$ H_{sw} = J^\top_{sw} W_{sw} J_{sw}$$
 $$ g_{sw} = - J^\top_{sw} W_{sw} {\dot{x}^{des}_{sw}}^\top$$
@@ -86,7 +91,7 @@ where:
 - $J_{st} \in \mathbb{R}^{n_{st}\times(6+n)}$ : stance feet Jacobian.
 Could also be a soft constraint: ${|| J_{st} \dot q ||}^2_{W_{st}}$ , for mud or whenever contacts aren't fixed
 **QP equality form:**
-$$\boxed{ A_{st} x = b_{st} }$$
+$$\boxed{ A_{st} z = b_{st} }$$
 with:
 $$ A_{st} = J_{st} $$
 $$ b_{st} = 0_{n_{st}\times 1} $$
@@ -102,7 +107,7 @@ $$ \frac{q_{j,min} - q_j(k)}{\Delta t} \le \dot q_j \le \frac{q_{j,max} - q_j(k)
 Therefore, the velocity limits are:
 $$ \dot q_{j,min}^* = \max \left[ \dot q_{j,min}, \frac{q_{j,min} - q_j(k)}{\Delta t} \right] \le \dot q_j \le \min \left[ \dot q_{j,max}, \frac{q_{j,max} - q_j(k)}{\Delta t} \right] = \dot q_{j,max}^* $$
 **QP inequality form:**
-$$\boxed{ l_{j} \le C_j {x} \le u_{j} }$$
+$$\boxed{ l_{j} \le C_j {z} \le u_{j} }$$
 with:
 $$ C_{j} = \begin{bmatrix} 0_{n\times 6} & I_{n\times n} \end{bmatrix}$$
 $$ l_{j} = \dot q_{j,min}^*$$
@@ -115,7 +120,7 @@ where:
 ---
 # Full optimization problem (QP form)
 Finally we have:
-$$\tag{QP} \begin{aligned} \min_{x} & \quad \frac{1}{2}x^{T}Hx+g^{T}x \\ \text{s.t.}&\left\{ \begin{array}{ll} Ax = b, \\ l \leq Cx \leq u.\\ \end{array} \right. \end{aligned} $$
+$$\tag{QP} \begin{aligned} \min_{z} & \quad \frac{1}{2}z^{T}Hz+g^{T}z \\ \text{s.t.}&\left\{ \begin{array}{ll} Az = b, \\ l \leq Cz \leq u.\\ \end{array} \right. \end{aligned} $$
 with:
 $$
 \begin{aligned}
@@ -148,7 +153,7 @@ where:
 # Controller pipeline
 Velocity-level WBC solves for the desired generalized velocity:
 $$
-x^* = \dot q^*
+z^* = \dot q^*
 $$
 The desired joint positions are obtained through discrete-time integration of the commanded joint velocities:
 $$q_{j,\mathrm{des}}(k+1)
