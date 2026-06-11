@@ -20,67 +20,16 @@ where:
 - $d = 6 + n$: dimension of the optimization variables.
 ---
 # Tasks:
-## Base pose task
-#### Task space variable:
-Base pose:
-$$x_{b} = \begin{bmatrix} p_{b} \\ q_{b} \end{bmatrix} \in \mathbb{R}^{3}\times \mathbb{S}^3  $$
-Velocity:
-$$ \dot{x}_{b} = J_{b} \dot{q} $$
-where:
-- $p_b \in \mathbb{R}^3$ : base position.
-- $q_{b} \in \mathbb{S}^3$ : base orientation.
-- $J_{b} \in \mathbb{R}^{6\times(6+n)}$ : base Jacobian.
-- 
-#### Desired velocity:
-$$ \dot x^{des}_{b} = \dot x^{ref}_{b} + K_p e_b $$
-with:
-$$ e_{b} 
-= \begin{bmatrix} p^{ref}_{b} - p_{b} \\ \text{Log}(R^{ref} R^\top)^\vee \end{bmatrix} $$
-where:
-- $\dot x^{des}_{b}, \dot x^{ref}_{b} \in \mathbb{R}^{6}$ : desired/reference base velocity.
-- $e_{b}\in \mathbb{R}^{3}$ : base pose error.
-- $p^{ref}_{b}\in \mathbb{R}^{3}$ : reference base position.
-- $R, R^{ref}\in SO3$ : current/reference base orientation as rotation matrix.
-- $K_p \in \mathbb{R}^{6\times6}$ : Proportional gains matrix.
-#### Least squares objective:
-$$ \frac{1}{2} {|| J_b \dot q - \dot x^{des}_b ||}^2_{W_{b}} $$
-where:
-- $W_{b} \in \mathbb{R}^{6\times6}$ : Weight matrix for the base tracking task
-#### Expanded QP form:
-$$\boxed{ \frac{1}{2} z^\top  H_{b} z + g^\top_{b} z }$$
-with:
-$$ H_{b} = J^\top_{b} W_{b} J_{b}$$
-$$ g_{b} = - J^\top_{b} W_{b} {\dot{x}^{des}_{b}}^\top$$
-where:
-- $H_{b} \in \mathbb{R}^{(6+n)\times (6+n)}$ : base pose task quadratic cost matrix.
-- $g_{b} \in \mathbb{R}^{6+n}$ : base pose task linear cost vector.
-## Swing foot task
-#### Task space variable:
-Foot swing position:
-$$x_{sw} = p_{sw} = \begin{bmatrix} x \\ y \\ z \end{bmatrix} \in \mathbb{R}^{3} $$
-Velocity:
-$$ \dot{x}_{sw} = J_{sw} \dot{q} $$
-where:
-- $p_{sw} \in \mathbb{R}^{3}$ : swing foot position.
-- $J_{sw} \in \mathbb{R}^{3\times(6+n)}$ : swing foot Jacobian.
-#### Desired velocity:
-$$ \dot x^{des}_{sw} = \dot x^{ref}_{sw} + K_p (x^{ref}_{sw} - x_{sw}) $$
-where:
-- $\dot x^{des}_{sw} \in \mathbb{R}^{3}$ : desired swing foot velocity.
-- $x^{ref}_{sw}, \dot x^{ref}_{sw} \in \mathbb{R}^{3}$ : reference swing foot position/velocity.
-- $K_p \in \mathbb{R}^{3\times3}$ : Proportional gains matrix.
-#### Least squares objective:
+#### Base position task
+Least squares objective from [[Base position#Velocity-based]]:
+$$ \frac{1}{2} {|| J_b \dot q - \dot{x}^{des}_b ||}^2_{W_{b}} $$
+#### Base attitude task
+Least squares objective from [[Base attitude#Velocity-based]]:
+$$ \frac{1}{2} {|| J_{\omega} \dot q - {\omega}^{des}_{b} ||}^2_{W_{{\omega}}} $$
+#### Swing foot task
+Least squares objective from [[Swing Task#Velocity-based]]
+
 $$ \frac{1}{2} {|| J_{sw} \dot q - \dot x^{des}_{sw} ||}^2_{W_{sw}} $$
-where:
-- $W_{sw} \in \mathbb{R}^{3\times3}$ : Weight matrix for the swing foot tracking task
-#### Expanded QP form:
-$$\boxed{ \frac{1}{2} z^\top  H_{sw} z + g^\top_{sw} z }$$
-with:
-$$ H_{sw} = J^\top_{sw} W_{sw} J_{sw}$$
-$$ g_{sw} = - J^\top_{sw} W_{sw} {\dot{x}^{des}_{sw}}^\top$$
-where:
-- $H_{sw} \in \mathbb{R}^{3\times 3}$ : base pose task quadratic cost matrix.
-- $g_{sw} \in \mathbb{R}^{3}$ : base pose task linear cost vector.
 ---
 # Constraints:
 ### Stance velocity
@@ -124,9 +73,9 @@ $$\tag{QP} \begin{aligned} \min_{z} & \quad \frac{1}{2}z^{T}Hz+g^{T}z \\ \text{s
 with:
 $$
 \begin{aligned}
-H &= H_{b} + H_{sw}
+H &= H_{b} + H_{\omega} + H_{sw}
 &
-g &= g_{sw} + g_{b}
+g &= g_{b} + g_{\omega} + g_{sw}
 \\[1em]
 A &= A_{st}
 &

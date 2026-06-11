@@ -23,101 +23,21 @@ where:
 
 ---
 # Tasks
-## Base pose task
-#### Task space variable:
-Base pose:
-$$x_{b} = \begin{bmatrix} p_{b} \\ q_{b} \end{bmatrix} \in \mathbb{R}^{3}\times \mathbb{S}^3  $$
-Velocity:
-$$ \dot{x}_{b} = J_{b} \dot{q} $$
-Acceleration:
-$$ \ddot{x}_{b} = J_{b} \ddot{q} + \dot{J}_{b} \dot{q}$$
-where:
-- $p_{b} \in \mathbb{R}^{3}$ : base position.
-- $q_{b} \in \mathbb{S}^3$ : base orientation.
-- $J_{b} \in \mathbb{R}^{6\times(6+n)}$ : base Jacobian.
-#### Desired acceleration:
-$$ \ddot x^{des}_{b} = \ddot x^{ref}_{b} + K_p e_{b} + K_d \dot e_{b} $$
-with:
-$$ e_{b} 
-= \begin{bmatrix} p^{ref}_{b} - p_{b} \\ \text{Log}(R^{ref} R^\top)^\vee \end{bmatrix} $$
-$$ \dot e_{b} 
-= \begin{bmatrix} v^{ref}_{b} - v_{b} \\ \omega^{ref}_{b} - \omega_{b} \end{bmatrix} $$
-where:
-- $\ddot x^{des}_{b}, \ddot x^{ref}_{b} \in \mathbb{R}^{6}$ : desired/reference base acceleration.
-- $e_{b}, \dot e_{b}\in \mathbb{R}^{3}$ : base position/velocity error.
-- $p^{ref}_{b}\in \mathbb{R}^{3}$ : reference base position.
-- $v^{ref}_{b}, \omega^{ref}_{b}\in \mathbb{R}^{3}$ : reference base linear/angular velocity.
-- $R, R^{ref}\in SO3$ : current/reference base orientation as rotation matrix.
-- $K_p \in \mathbb{R}^{6\times6}$ : Proportional gains matrix.
-- $K_d \in \mathbb{R}^{6\times6}$ : Derivative gains matrix.
-#### Least squares objective:
-$$ \frac{1}{2} {|| J_{b} \ddot{q} + \dot{J}_{b} \dot{q} - \ddot x^{des}_{b} ||}^{2}_{W_{b}} $$
-where:
-- $W_{b} \in \mathbb{R}^{6\times6}$ : Positive semidefinite weight matrix
-#### Expanded QP form:
-$$\boxed{ \frac{1}{2} z^\top \begin{bmatrix} H_{b} & 0 & 0 \\ 0 & 0 & 0 \\ 0 & 0 & 0 \end{bmatrix} z + \begin{bmatrix} g_{b}^\top & 0 & 0 \end{bmatrix} z }$$
-with:
-$$ H_{b} = J^\top_{b} W_{b} J_{b}$$
-$$ g_{b} = J^\top_{b} W_{b} (\dot{J}_{b} \dot{q} - \ddot{x}^{des}_{b})$$
-where:
-- $H_{b} \in \mathbb{R}^{(6+n)\times (6+n)}$ : base pose task quadratic cost matrix.
-- $g_{b} \in \mathbb{R}^{6+n}$ : base pose task linear cost vector.
-## Swing foot task
-#### Task space variable:
-Foot swing position:
-$$x_{sw} = p_{sw} = \begin{bmatrix} x \\ y \\ z \end{bmatrix} \in \mathbb{R}^{3} $$
-Velocity:
-$$ \dot{x}_{sw} = J_{sw} \dot{q} $$
-Acceleration:
-$$ \ddot{x}_{sw} = J_{sw} \ddot{q} + \dot{J}_{sw} \dot{q}$$
-where:
-- $p_{sw} \in \mathbb{R}^{3}$ : swing foot position
-- $J_{sw} \in \mathbb{R}^{3\times(6+n)}$ : swing foot Jacobian.
-#### Desired acceleration:
-$$ \ddot x^{des}_{sw} = \ddot x^{ref}_{sw} + K_p (x^{ref}_{sw} - x_{sw}) + K_d (\dot x^{ref}_{sw} - \dot x_{sw}) $$
-where:
-- $\ddot x^{des}_{sw} \in \mathbb{R}^{3}$ : desired swing foot acceleration.
-- $x^{ref}_{sw}, \dot x^{ref}_{sw}, \ddot x^{ref}_{sw} \in \mathbb{R}^{3}$ : reference swing foot position/velocity/acceleration.
-- $K_p \in \mathbb{R}^{3\times3}$ : Proportional gains matrix.
-- $K_d \in \mathbb{R}^{3\times3}$ : Derivative gains matrix.
-#### Least squares objective:
-$$ \frac{1}{2} {|| J_{sw} \ddot{q} + \dot{J}_{sw} \dot{q} - \ddot x^{des}_{sw} ||}^{2}_{W_{sw}} $$
-where:
-- $W_{sw} \in \mathbb{R}^{3\times3}$ : Positive semidefinite weight matrix
-#### Expanded QP form:
-$$\boxed{ \frac{1}{2} z^\top \begin{bmatrix} H_{sw} & 0 & 0 \\ 0 & 0 & 0 \\ 0 & 0 & 0 \end{bmatrix} z + \begin{bmatrix} g^\top_{sw} & 0 & 0 \end{bmatrix} z }$$
-with:
-$$ H_{sw} = J^\top_{sw} W_{sw} J_{sw}$$
-$$ g_{sw} = J^\top_{sw} W_{sw} (\dot{J}_{sw} \dot{q} - \ddot{x}^{des}_{sw})$$
-where:
-- $H_{sw} \in \mathbb{R}^{(6+n)\times (6+n)}$ : swing foot task quadratic cost matrix.
-- $g_{sw} \in \mathbb{R}^{6+n}$ : swing foot task linear cost vector.
-## Force regularization
-#### Least squares objective:
+#### Base position task
+Least squares objective from [[Base position#Acceleration-based]]:
+$$ \frac{1}{2} {|| J_{b} \ddot{q} + \dot{J}_{b} \dot{q} - \ddot{x}^{des}_{b} ||}^{2}_{W_{b}} $$
+#### Base attitude task
+Least squares objective from [[Base attitude#Acceleration-based]]:
+$$ \frac{1}{2} {|| J_{\omega} \ddot{q} + \dot{J}_{\omega} \dot{q} - \dot \omega^{des}_{\omega} ||}^{2}_{W_{\omega}} $$
+#### Swing foot task
+Least squares objective from [[Swing Task#Acceleration-based]]:
+$$ \frac{1}{2} {|| J_{sw} \ddot{q} + \dot{J}_{sw} \dot{q} - \ddot{x}^{des}_{sw} ||}^{2}_{W_{sw}} $$
+#### Force regularization
+Least squares objective from [[Force regularization#Min norm]]:
 $$ \frac{1}{2} {|| f_{c} ||}^2_{W_{f}} $$
-where:
-- $W_{f} \in \mathbb{R}^{n_{st}\times n_{st}}$ : Weight matrix for the force regularization task
-#### Expanded QP form:
-$$\boxed{ \frac{1}{2} z^\top \begin{bmatrix} 0 & 0 & 0 \\ 0 & H_{f} & 0 \\ 0 & 0 & 0\end{bmatrix} z + \begin{bmatrix} 0 & g^\top_{f} & 0 \end{bmatrix} z }$$
-with:
-$$ H_{f} = W_{f} $$
-$$ g_{f} = 0_{n_{st}\times 1} $$
-where:
-- $H_{f} \in \mathbb{R}^{n_{st}\times n_{st}}$ : force regularization quadratic cost matrix.
-- $g_{f} \in \mathbb{R}^{n_{st}}$ : force regularization linear cost vector.
-## Torque regularization
-#### Least squares objective:
+#### Torque regularization
+Least squares objective from [[Torque regularization]]:
 $$ \frac{1}{2} {|| \tau ||}^2_{W_{\tau}} $$
-where:
-- $W_{\tau} \in \mathbb{R}^{n\times n}$ : Weight matrix for the torque regularization task
-#### Expanded QP form:
-$$\boxed{ \frac{1}{2} z^\top \begin{bmatrix} 0 & 0 & 0 \\ 0 & 0 & 0 \\ 0 & 0 & H_{\tau} \end{bmatrix} z + \begin{bmatrix} 0 & 0 & g^\top_{\tau} \end{bmatrix} z }$$
-with:
-$$ H_{\tau} = W_{\tau} $$
-$$ g_{\tau} = 0_{n\times 1} $$
-where:
-- $H_{\tau} \in \mathbb{R}^{n\times n}$ : torque regularization quadratic cost matrix.
-- $g_{\tau} \in \mathbb{R}^{n}$ : torque regularization linear cost vector.
 ---
 # Constraints:
 ## Floating base dynamics constraint
